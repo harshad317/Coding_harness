@@ -9,6 +9,7 @@ from pathlib import Path
 from harness.agent import AgentConfig, MODE, run_task
 from harness.log import JsonlLogger, RunRecord
 from harness.models import build_client
+from harness.repo_agent import REPO_MODE, RepoConfig, run_repo_task
 
 
 def collect_tasks(args: argparse.Namespace) -> list[Path]:
@@ -23,6 +24,67 @@ def status(value: bool | None) -> str:
     if value is False:
         return "FAIL"
     return "-"
+
+
+def read_instruction(args: argparse.Namespace) -> str:
+    parts: list[str] = []
+    if args.instruction:
+        parts.append(args.instruction)
+    if args.instruction_file:
+        parts.append(Path(args.instruction_file).read_text())
+    return "\n\n".join(part.strip() for part in parts if part.strip())
+
+
+def run_repo_mode(args: argparse.Namespace) -> int:
+    instruction = read_instruction(args)
+    if not instruction:
+        print("repo mode requires --instruction or --instruction-file", file=sys.stderr)
+        return 2
+
+    client = build_client(
+        args.model,
+        max_tokens=args.max_tokens,
+        temperature=args.temperature,
+        timeout=args.model_timeout,
+    )
+    logger = JsonlLogger(Path(args.log))
+    config = RepoConfig(
+        max_iterations=args.max_iterations,
+        max_bash_calls=args.max_bash_calls,
+        command_timeout=args.repo_timeout,
+        max_repo_bytes=args.max_repo_bytes,
+        max_file_bytes=args.max_file_bytes,
+        apply=args.apply,
+        diff_out=Path(args.diff_out) if args.diff_out else None,
+    )
+    repo_dir = Path(args.repo)
+    record = RunRecord(task_id=repo_dir.name, model=args.model, mode=REPO_MODE, k=args.max_iterations)
+    try:
+        run_repo_task(client, repo_dir, instruction, args.test_command, config, record)
+    except Exception as exc:
+        record.final_error_type = f"harness_error:{type(exc).__name__}:{exc}"
+    logger.write(record)
+
+    suggestions = record.extra.get("critical_suggestions") or []
+    changed = record.extra.get("changed_paths") or []
+    print(
+        f"repo={repo_dir} tests={status(record.passed_self)} "
+        f"iters={record.iterations_used} bash={record.bash_calls_used} "
+        f"tokens={record.tokens_in + record.tokens_out} "
+        f"changed={len(changed)} error={record.final_error_type or '-'}"
+    )
+    if changed:
+        print("changed paths:")
+        for path in changed:
+            print(f"  {path}")
+    if suggestions:
+        print("critical suggestions:")
+        for item in suggestions[:5]:
+            print(f"  - {item}")
+    if args.diff_out:
+        print(f"wrote diff: {args.diff_out}")
+    print(f"wrote log: {args.log}")
+    return 0 if record.final_error_type is None else 1
 
 
 def main() -> int:
@@ -40,7 +102,19 @@ def main() -> int:
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--model-timeout", type=int, default=300)
     parser.add_argument("--log", default="results/dval_runs.jsonl")
+    parser.add_argument("--repo", help="run repo-mode harness against this repository path")
+    parser.add_argument("--instruction", help="repo-mode change request")
+    parser.add_argument("--instruction-file", help="file containing repo-mode change request")
+    parser.add_argument("--test-command", help="repo-mode test command, for example: python -m pytest -q")
+    parser.add_argument("--repo-timeout", type=int, default=60, help="repo-mode test command timeout in seconds")
+    parser.add_argument("--max-repo-bytes", type=int, default=200_000, help="repo snapshot budget sent to the model")
+    parser.add_argument("--max-file-bytes", type=int, default=30_000, help="max size for one file in repo snapshot")
+    parser.add_argument("--diff-out", help="write repo-mode final diff to this path")
+    parser.add_argument("--apply", action="store_true", help="apply repo-mode changes back to the source repo")
     args = parser.parse_args()
+
+    if args.repo:
+        return run_repo_mode(args)
 
     tasks = collect_tasks(args)
     if args.limit is not None:

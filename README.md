@@ -1,28 +1,31 @@
 # D_val Coding Harness
 
-D_val is a minimal self-test repair harness for Python coding tasks. This repo
-uses OpenAI models only, and the default model is `gpt-5.4-mini`.
+D_val is a coding harness for Python tasks and repositories. This repo uses
+OpenAI models only, and the default model is `gpt-5.4-mini`.
 
-It runs one loop:
+It has two loops:
 
-1. Read a task prompt and starter implementation.
-2. Ask the model to write both `solution.py` and `self_tests.py`.
-3. Execute only the generated self-tests.
-4. Feed self-test failures back to the model.
-5. Score hidden tests only after the repair loop ends.
+1. **Task mode** reads a task prompt and starter `solution.py`, asks the model
+   to write `solution.py` and `self_tests.py`, runs generated self-tests,
+   feeds failures back, then scores private hidden tests.
+2. **Repo mode** copies a full repository into an isolated workspace, gives the
+   model the repo tree and file contents, applies structured add/edit/delete
+   operations, runs the configured project test command, feeds failures back,
+   and emits a final diff plus critical suggestions.
 
-Hidden tests are never shown to the model. There are no baseline modes, public
-test modes, plotting tools, benchmark loaders, local-model/Ollama code, or
-non-OpenAI provider paths in this trimmed repo.
+Hidden tests are never shown to the model in task mode. Repo mode edits a copy
+of the repository by default; pass `--apply` only when you want the harness to
+write the final changes back to the source repo.
 
 ## What This Repo Contains
 
 ```text
 harness/
-  agent.py      # D_val self-test repair loop
-  models.py     # OpenAI Responses API client for gpt-5.4-mini by default
-  sandbox.py    # isolated task workspace and pytest runner
-  log.py        # JSONL run records
+  agent.py       # single-file D_val self-test repair loop
+  repo_agent.py  # full-repo add/edit/delete repair loop
+  models.py      # OpenAI Responses API client for gpt-5.4-mini by default
+  sandbox.py     # isolated task workspace and pytest runner
+  log.py         # JSONL run records
 run.py          # CLI entry point
 tasks/          # small sample Python tasks
 ```
@@ -76,6 +79,48 @@ python run.py \
   --max-iterations 3
 ```
 
+## Run Repo Mode
+
+Repo mode is for a real codebase. It reads the repo tree and text files into
+the model prompt, asks for a step-by-step JSON plan, applies file operations in
+a temporary copy, runs your test command, and writes a diff.
+
+```bash
+python run.py \
+  --model gpt-5.4-mini \
+  --repo /path/to/repo \
+  --instruction "Fix the failing tests and keep the change minimal." \
+  --test-command "python -m pytest -q" \
+  --max-iterations 3 \
+  --diff-out results/repo_fix.patch \
+  --log results/repo_runs.jsonl
+```
+
+By default repo mode does not modify `/path/to/repo`; it only logs the run and
+writes the diff. To write the final changed files back to the source repo only
+when the run ends without a harness or test error, add:
+
+```bash
+--apply
+```
+
+Files omitted because of binary content or snapshot byte limits are reported in
+`snapshot_omitted`. Increase `--max-repo-bytes` and `--max-file-bytes` when you
+want the model to receive more of a large codebase.
+
+Repo-mode model responses use this contract:
+
+```json
+{
+  "analysis_steps": ["ordered technical reasoning"],
+  "critical_suggestions": ["risks, missing tests, follow-ups"],
+  "operations": [
+    {"op": "write", "path": "relative/file.py", "content": "complete file content"},
+    {"op": "delete", "path": "relative/old_file.py"}
+  ]
+}
+```
+
 ## Useful Options
 
 ```text
@@ -87,6 +132,12 @@ python run.py \
 --max-tokens         Max model output tokens. Default: 4096
 --temperature        Model temperature. Default: 0.0
 --log                JSONL output path. Default: results/dval_runs.jsonl
+--repo               Run repo mode against a repository path
+--instruction        Repo-mode change request
+--instruction-file   Repo-mode change request file
+--test-command       Repo-mode command such as "python -m pytest -q"
+--diff-out           Repo-mode final diff output path
+--apply              Apply repo-mode changes back to the source repo
 ```
 
 ## Output
@@ -118,6 +169,18 @@ model_error:*        model API call failed
 harness_error:*      harness runtime failed
 ```
 
+Repo mode also records:
+
+```text
+changed_paths
+operation_batches
+analysis_steps
+critical_suggestions
+snapshot_omitted
+final_diff
+last_test_output
+```
+
 ## Validate Locally
 
 ```bash
@@ -130,13 +193,13 @@ client in a Python script or REPL.
 
 ## Safety Notes
 
-Generated `solution.py` and `self_tests.py` run in a temporary task workspace
-with a sanitized subprocess environment. Secrets such as `OPENAI_API_KEY` are
-not inherited by model-generated tests or hidden-test scoring subprocesses.
+Generated `solution.py`, generated `self_tests.py`, and repo-mode test commands
+run in temporary workspaces with sanitized subprocess environments. Secrets
+such as `OPENAI_API_KEY` are not inherited by model-generated tests, hidden-test
+scoring subprocesses, or repo-mode test commands.
 
 ## Design Boundary
 
-This repository is intentionally narrow. It is only the D_val self-test repair
-loop using OpenAI models. Anything related to baseline comparisons, SWE-bench
-scoring, plotting, benchmark downloading, local model hosting, non-OpenAI
-providers, or GCP/Docker orchestration belongs outside this minimal core.
+This repository is intentionally focused on OpenAI-backed coding harness loops.
+Benchmark plotting, local model hosting, non-OpenAI providers, and cloud
+orchestration belong outside this core.
