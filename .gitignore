@@ -3,6 +3,10 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 .claude/
+frontend/dist/
+frontend/node_modules/
+frontend/*.tsbuildinfo
 results/*.jsonl
+results/app_runs/
 results/plots/
 tasks_bench/

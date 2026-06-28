@@ -1,0 +1,399 @@
+:root {
+  color: #202124;
+  background: #f4f6f8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f4f6f8;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+}
+
+.topbar {
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #d8dee6;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  letter-spacing: 0;
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(220px, 280px);
+  padding: 16px;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.panelHeader {
+  align-items: center;
+  border-bottom: 1px solid #e4e8ee;
+  display: flex;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 14px;
+}
+
+.warningHeader {
+  color: #9a3412;
+}
+
+.controlPanel {
+  align-self: start;
+}
+
+.runForm {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+label {
+  color: #3f4652;
+  display: grid;
+  font-size: 13px;
+  font-weight: 650;
+  gap: 6px;
+}
+
+input,
+textarea {
+  background: #fbfcfe;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #202124;
+  min-height: 38px;
+  outline: none;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+textarea {
+  min-height: 122px;
+  resize: vertical;
+}
+
+.formGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.toggle {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.toggle input {
+  height: 18px;
+  min-height: 18px;
+  width: 18px;
+}
+
+.primaryButton,
+.iconButton,
+.historyItem {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.primaryButton {
+  background: #0f766e;
+  color: #ffffff;
+  font-weight: 750;
+  padding: 9px 12px;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.iconButton {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #202124;
+  height: 38px;
+  padding: 0 10px;
+}
+
+.linkButton {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.statusPanel {
+  padding-bottom: 14px;
+}
+
+.statusRow {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+}
+
+.runId {
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.statusBadge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 750;
+  gap: 7px;
+  padding: 7px 10px;
+  text-transform: capitalize;
+}
+
+.statusBadge.queued,
+.statusBadge.running {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.statusBadge.succeeded {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusBadge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.metricGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0 14px 14px;
+}
+
+.metric {
+  border: 1px solid #e4e8ee;
+  border-radius: 6px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+}
+
+.metric span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.metric strong {
+  font-size: 18px;
+}
+
+.eventLog {
+  border-top: 1px solid #e4e8ee;
+  color: #475569;
+  display: grid;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  gap: 6px;
+  max-height: 130px;
+  overflow: auto;
+  padding: 12px 14px 0;
+}
+
+.detailGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.itemList {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 14px;
+}
+
+.itemList li {
+  border-left: 3px solid #0f766e;
+  color: #334155;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  padding-left: 9px;
+}
+
+.outputPanel pre {
+  color: #111827;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+  max-height: 340px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.historyPanel {
+  align-self: start;
+}
+
+.historyList {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.historyItem {
+  background: #ffffff;
+  border-color: #e4e8ee;
+  color: #1f2937;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  justify-content: stretch;
+  padding: 8px;
+  text-align: left;
+  width: 100%;
+}
+
+.historyItem.selected {
+  border-color: #0f766e;
+}
+
+.historyItem span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyItem small {
+  color: #64748b;
+}
+
+.statusDot {
+  border-radius: 999px;
+  height: 10px;
+  width: 10px;
+}
+
+.statusDot.queued,
+.statusDot.running {
+  background: #0284c7;
+}
+
+.statusDot.succeeded {
+  background: #16a34a;
+}
+
+.statusDot.failed {
+  background: #dc2626;
+}
+
+.emptyState {
+  color: #64748b;
+  padding: 14px;
+}
+
+.errorLine {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 13px;
+  padding: 9px 10px;
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: 340px minmax(0, 1fr);
+  }
+
+  .historyPanel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 820px) {
+  .layout,
+  .detailGrid,
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    padding: 14px 16px;
+  }
+
+  .layout {
+    padding: 12px;
+  }
+}

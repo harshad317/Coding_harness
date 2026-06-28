@@ -26,6 +26,8 @@ harness/
   models.py      # OpenAI Responses API client for gpt-5.4-mini by default
   sandbox.py     # isolated task workspace and pytest runner
   log.py         # JSONL run records
+harness_app/     # FastAPI app API and run service
+frontend/        # React TypeScript app
 run.py          # CLI entry point
 tasks/          # small sample Python tasks
 ```
@@ -121,6 +123,28 @@ Repo-mode model responses use this contract:
 }
 ```
 
+## Run the App
+
+Terminal 1:
+
+```bash
+export OPENAI_API_KEY="your_api_key_here"
+uvicorn harness_app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Terminal 2:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the Vite URL shown in Terminal 2. The app lets you configure repo path,
+instruction, test command, model settings, apply mode, and snapshot budgets. It
+shows live run state, changed paths, critical suggestions, step trace, test
+output, and the generated diff.
+
 ## Useful Options
 
 ```text
@@ -185,7 +209,8 @@ last_test_output
 
 ```bash
 python -m pytest -q
-python -m compileall -q harness run.py
+python -m compileall -q harness harness_app run.py
+cd frontend && npm run build
 ```
 
 You can also run a no-API smoke check by importing `run_task` with a fake model
