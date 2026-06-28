@@ -26,9 +26,9 @@ harness/
   models.py      # OpenAI Responses API client for gpt-5.4-mini by default
   sandbox.py     # isolated task workspace and pytest runner
   log.py         # JSONL run records
-harness_app/     # FastAPI app API and run service
-frontend/        # React TypeScript app
-run.py          # CLI entry point
+harness_desktop/ # native Tkinter desktop app and run service
+desktop_app.py   # desktop app launcher
+run.py           # CLI entry point
 tasks/          # small sample Python tasks
 ```
 
@@ -123,27 +123,21 @@ Repo-mode model responses use this contract:
 }
 ```
 
-## Run the App
+## Run the Desktop App
 
-Terminal 1:
+This opens a native laptop window. It does not start a web server and does not
+need a browser.
 
 ```bash
 export OPENAI_API_KEY="your_api_key_here"
-uvicorn harness_app.main:app --reload --host 127.0.0.1 --port 8000
+python desktop_app.py
 ```
 
-Terminal 2:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open the Vite URL shown in Terminal 2. The app lets you configure repo path,
-instruction, test command, model settings, apply mode, and snapshot budgets. It
-shows live run state, changed paths, critical suggestions, step trace, test
-output, and the generated diff.
+The app lets you choose a repo folder, enter the instruction and test command,
+adjust model settings, choose whether clean runs should be applied back to the
+source repo, then view events, changed files, critical suggestions, step trace,
+test output, and the generated diff. Diffs are saved under
+`results/desktop_runs/`.
 
 ## Useful Options
 
@@ -209,8 +203,7 @@ last_test_output
 
 ```bash
 python -m pytest -q
-python -m compileall -q harness harness_app run.py
-cd frontend && npm run build
+python -m compileall -q harness harness_desktop run.py desktop_app.py
 ```
 
 You can also run a no-API smoke check by importing `run_task` with a fake model

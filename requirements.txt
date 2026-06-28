@@ -1,6 +1,3 @@
 certifi>=2024.2.2
-fastapi>=0.115
-httpx>=0.27
 pytest>=8
 truststore>=0.8
-uvicorn[standard]>=0.30
