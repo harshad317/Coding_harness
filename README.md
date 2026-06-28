@@ -121,11 +121,18 @@ harness_error:*      harness runtime failed
 ## Validate Locally
 
 ```bash
+python -m pytest -q
 python -m compileall -q harness run.py
 ```
 
 You can also run a no-API smoke check by importing `run_task` with a fake model
 client in a Python script or REPL.
+
+## Safety Notes
+
+Generated `solution.py` and `self_tests.py` run in a temporary task workspace
+with a sanitized subprocess environment. Secrets such as `OPENAI_API_KEY` are
+not inherited by model-generated tests or hidden-test scoring subprocesses.
 
 ## Design Boundary
 

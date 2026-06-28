@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -60,7 +61,11 @@ class OpenAIResponsesClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(
+                request,
+                timeout=self.timeout,
+                context=_ssl_context(),
+            ) as response:
                 body = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")
@@ -83,10 +88,11 @@ def _responses_input(messages: list[dict]) -> list[dict]:
         content = str(message.get("content") or "")
         if role == "system":
             role = "developer"
+        content_type = "output_text" if role == "assistant" else "input_text"
         items.append(
             {
                 "role": role,
-                "content": [{"type": "input_text", "text": content}],
+                "content": [{"type": content_type, "text": content}],
             }
         )
     return items
@@ -102,6 +108,21 @@ def _extract_response_text(body: dict) -> str:
             if isinstance(text, str):
                 chunks.append(text)
     return "\n".join(chunks)
+
+
+def _ssl_context() -> ssl.SSLContext | None:
+    try:
+        import truststore
+    except ImportError:
+        pass
+    else:
+        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+    try:
+        import certifi
+    except ImportError:
+        return None
+    return ssl.create_default_context(cafile=certifi.where())
 
 
 def build_client(

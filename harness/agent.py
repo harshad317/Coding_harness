@@ -21,7 +21,7 @@ from .sandbox import RunResult, Sandbox, score_hidden
 
 MODE = "D_val"
 MAX_BASH_CALLS = 10
-CODE_FENCE_RE = re.compile(r"```(?:python)?\s*\n(.*?)```", re.DOTALL)
+CODE_FENCE_RE = re.compile(r"```(?:python|py)?[^\n]*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
 @dataclass

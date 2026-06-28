@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,17 @@ from pathlib import Path
 
 SANDBOX_FILES = ["prompt.md", "solution.py"]
 DEFAULT_CMD_TIMEOUT = 10
+SAFE_ENV_PASSTHROUGH = (
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "PATH",
+    "TMP",
+    "TMPDIR",
+    "TEMP",
+    "VIRTUAL_ENV",
+)
 
 
 @dataclass
@@ -58,12 +70,7 @@ class Sandbox:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={
-                    **os.environ,
-                    "PYTHONDONTWRITEBYTECODE": "1",
-                    "PYTHONINTMAXSTRDIGITS": "1000000",
-                    "PYTHONHASHSEED": "0",
-                },
+                env=_safe_subprocess_env(),
             )
             return RunResult(proc.returncode, proc.stdout, proc.stderr, False)
         except subprocess.TimeoutExpired as e:
@@ -76,7 +83,7 @@ class Sandbox:
 
     def run_pytest(self, test_file: str, timeout: int = DEFAULT_CMD_TIMEOUT) -> RunResult:
         return self.run(
-            ["python", "-m", "pytest", "-q", "--no-header", "--tb=short", test_file],
+            [sys.executable, "-m", "pytest", "-q", "--no-header", "--tb=short", test_file],
             timeout=timeout,
         )
 
@@ -95,17 +102,12 @@ def score_hidden(task_dir: Path, sandbox: Sandbox, timeout: int = DEFAULT_CMD_TI
         shutil.copy2(sandbox.tmp / "solution.py", score_dir / "solution.py")
         shutil.copy2(task_dir / "hidden_tests.py", score_dir / "hidden_tests.py")
         proc = subprocess.run(
-            ["python", "-m", "pytest", "-q", "--no-header", "--tb=short", "hidden_tests.py"],
+            [sys.executable, "-m", "pytest", "-q", "--no-header", "--tb=short", "hidden_tests.py"],
             cwd=score_dir,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env={
-                **os.environ,
-                "PYTHONDONTWRITEBYTECODE": "1",
-                "PYTHONINTMAXSTRDIGITS": "1000000",
-                "PYTHONHASHSEED": "0",
-            },
+            env=_safe_subprocess_env(),
         )
         return RunResult(proc.returncode, proc.stdout, proc.stderr, False)
     except subprocess.TimeoutExpired as e:
@@ -117,3 +119,20 @@ def score_hidden(task_dir: Path, sandbox: Sandbox, timeout: int = DEFAULT_CMD_TI
         )
     finally:
         shutil.rmtree(score_dir, ignore_errors=True)
+
+
+def _safe_subprocess_env() -> dict[str, str]:
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key in SAFE_ENV_PASSTHROUGH and value
+    }
+    env.update(
+        {
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONHASHSEED": "0",
+            "PYTHONINTMAXSTRDIGITS": "1000000",
+            "PYTHONNOUSERSITE": "1",
+        }
+    )
+    return env
